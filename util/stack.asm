@@ -28,7 +28,7 @@ ALIGN_SIZE_8    EQU     8
 ALIGN_WITH_8    EQU     (ALIGN_SIZE_8 - 1)
 ALIGN_MASK_8    EQU     ~(ALIGN_WITH_8)
 ;
-ALIGN_SIZE_16   EQU     8
+ALIGN_SIZE_16   EQU     16
 ALIGN_WITH_16   EQU     (ALIGN_SIZE_16 - 1)
 ALIGN_MASK_16   EQU     ~(ALIGN_WITH_16)
 ;
@@ -124,6 +124,7 @@ stack_full:
 ;
 ;   QWORD [rbp - 8]   = rdi (stack)
 ;   QWORD [rbp - 16]  = buf_size
+;   QWORD [rbp - 24]  = rbx (callee saved)
 ;- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;
       global stack_init:function
@@ -131,10 +132,9 @@ stack_init:
 ; prologue
       push      rbp
       mov       rbp, rsp
-      sub       rsp, 16
-      push      r12
-; QWORD [rbp - 8] = rdi (stack)
+      sub       rsp, 24
       mov       QWORD [rbp - 8], rdi
+      mov       QWORD [rbp - 24], rbx
 ; stack->o_size = size
       mov       QWORD [rdi + stack.o_size], rdx
 ; stack->s_size = (size + ALIGN_SIZE_8 - 1) & ALIGN_MASK_8
@@ -153,7 +153,7 @@ stack_init:
 ; if ((stack->buffer = calloc(1, buf_size)) == NULL) return -1
       mov       rdi, 1
       mov       rsi, rax
-      ALIGN_STACK_AND_CALL r12, calloc, wrt, ..plt
+      ALIGN_STACK_AND_CALL rbx, calloc, wrt, ..plt
       mov       rdi, QWORD [rbp - 8]
       mov       QWORD [rdi + stack.buffer], rax
       mov       QWORD [rdi + stack.head], rax
@@ -170,7 +170,7 @@ stack_init:
 ; return 0
       xor       eax, eax
 .epilogue:
-      pop       r12
+      mov       rbx, QWORD [rbp - 24]
       mov       rsp, rbp
       pop       rbp
       ret
@@ -271,6 +271,7 @@ stack_push:
 ; stack:
 ;
 ;   QWORD [rbp - 8] = rdi (stack}
+;   QWORD [rbp - 16]  = rbx (callee saved)
 ;- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ;
       global stack_term:function
@@ -278,19 +279,18 @@ stack_term:
 ; prologue
       push      rbp
       mov       rbp, rsp
-      sub       rsp, 8
-      push      r12
-; QWORD [rbp - 8] = rdi (stack}
+      sub       rsp, 24
       mov       QWORD [rbp - 8], rdi
+      mov       QWORD [rbp - 16], rbx
 ; free item stack memory
       mov       rdi, QWORD [rdi + stack.buffer]
-      ALIGN_STACK_AND_CALL r12, free, wrt, ..plt
+      ALIGN_STACK_AND_CALL rbx, free, wrt, ..plt
 ; zero out stack structure
       mov       rdi, QWORD [rbp - 8]
       mov       rsi, QWORD stackSize
-      ALIGN_STACK_AND_CALL r12, bzero, wrt, ..plt
+      ALIGN_STACK_AND_CALL rbx, bzero, wrt, ..plt
 ; epilogue
-      pop       r12
+      mov       rbx, QWORD [rbp - 16]
       mov       rsp, rbp
       pop       rbp
       ret
