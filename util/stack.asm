@@ -132,7 +132,7 @@ stack_init:
 ; prologue
       push      rbp
       mov       rbp, rsp
-      sub       rsp, 24
+      sub       rsp, 32
       mov       QWORD [rbp - 8], rdi
       mov       QWORD [rbp - 24], rbx
 ; stack->o_size = size
@@ -235,7 +235,7 @@ stack_push:
 ; prologue
       push      rbp
       mov       rbp, rsp
-      sub       rsp, 8
+      sub       rsp, 16
 ; QWORD [rbp - 8] = rdi (stack)
       mov       QWORD [rbp - 8], rdi
 ; if (stack->head == stack->end) return -1
@@ -279,7 +279,7 @@ stack_term:
 ; prologue
       push      rbp
       mov       rbp, rsp
-      sub       rsp, 24
+      sub       rsp, 32
       mov       QWORD [rbp - 8], rdi
       mov       QWORD [rbp - 16], rbx
 ; free item stack memory
