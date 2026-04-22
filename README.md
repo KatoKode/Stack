@@ -1,6 +1,4 @@
-Just Another Armchair Programmer
-
-Stack Implementation in x86_64 Assembly Language with C interface
+Stack Implementation in x86_64 Assembly Language with C interface as a Shared-Library
 
 by Jerry McIntosh
 
